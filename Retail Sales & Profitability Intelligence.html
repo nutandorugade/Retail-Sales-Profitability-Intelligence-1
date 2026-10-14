@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retail Sales & Profitability Intelligence</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f2f1;--card:#fff;--tx:#201f1e;--mu:#605e5c;--bd:#e1dfdd;--pri:#118dff;--sec:#12239e;--ok:#0f9d8a;--bad:#d64550;--hd:#252423}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a19;--card:#292827;--tx:#f3f2f1;--mu:#a19f9d;--bd:#3b3a39;--pri:#4aa8ff;--sec:#7b8cff;--ok:#2cc4ae;--bad:#f0707a}}
+:root[data-theme="dark"]{--bg:#1b1a19;--card:#292827;--tx:#f3f2f1;--mu:#a19f9d;--bd:#3b3a39;--pri:#4aa8ff;--sec:#7b8cff;--ok:#2cc4ae;--bad:#f0707a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+header{background:var(--hd);color:#fff;padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between}
+header h1{font-size:18px;margin:0;font-weight:600}header small{opacity:.7;display:block;font-weight:400;font-size:12px}
+.sl{display:flex;gap:10px;flex-wrap:wrap}.sl label{font-size:11px;opacity:.8;display:block}
+select{background:#fff;color:#201f1e;border:0;border-radius:3px;padding:5px 8px;font:inherit;min-width:110px}
+main{padding:14px;max-width:1200px;margin:auto;display:grid;gap:12px}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:4px;padding:12px 14px;min-width:0}
+.k .l{color:var(--mu);font-size:12px}.k .v{font-size:26px;font-weight:600;margin:2px 0}.k .d{font-size:12px}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+h2{font-size:13px;margin:0 0 8px;font-weight:600}
+.sc{overflow-x:auto}svg{display:block;width:100%;height:auto}svg text{fill:var(--mu);font-size:10px}
+table{width:100%;border-collapse:collapse;min-width:420px}th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--bd)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}th{color:var(--mu);font-weight:600;font-size:12px}
+.p{padding:1px 8px;border-radius:10px;color:#fff;font-size:12px}
+.ins li{margin:4px 0}.lg{font-size:11px;color:var(--mu);display:flex;gap:12px;margin-bottom:4px}.lg i{display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px}
+footer{color:var(--mu);font-size:11px;text-align:center;padding:4px 0 10px}
+</style></head><body>
+<header><div><h1>Retail Sales & Profitability Intelligence<small>SQL · Power BI · DAX | Sample data for portfolio</small></h1></div>
+<div class="sl"><div><label>Year</label><select id="fy"><option>2025</option><option>2024</option></select></div>
+<div><label>Region</label><select id="fr"></select></div><div><label>Category</label><select id="fc"></select></div></div></header>
+<main>
+<div class="kp" id="kp"></div>
+<div class="g2">
+<div class="c"><h2>Monthly Revenue & Profit</h2><div class="lg"><span><i style="background:var(--pri)"></i>Revenue</span><span><i style="background:var(--sec)"></i>Profit</span></div><div class="sc"><svg id="ch1" viewBox="0 0 560 230"></svg></div></div>
+<div class="c"><h2>Profit Margin % by Category <span style="font-weight:400;color:var(--mu)">(red = below average)</span></h2><svg id="ch2" viewBox="0 0 560 230"></svg></div>
+</div>
+<div class="g2">
+<div class="c sc"><h2>Store Performance</h2><table id="tb"></table></div>
+<div class="c"><h2>Key Insights & Recommendations</h2><ul class="ins" id="in"></ul></div>
+</div>
+</main>
+<footer>Illustrative dataset. Metrics mirror DAX measures: Total Revenue, Total Profit, Profit Margin %, MoM Growth %.</footer>
+<script>
+var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+var ST=[["Mumbai Central","West",1.3],["Pune Hub","West",1.0],["Delhi NCR","North",1.25],["Chandigarh","North",0.8],["Chennai","South",1.1],["Bengaluru","South",1.2],["Kolkata","East",0.9],["Bhubaneswar","East",0.65]];
+var CT=[["Electronics",.12,1.6],["Furniture",.05,1.1],["Clothing",.22,1.0],["Grocery",.10,1.4],["Home & Kitchen",.18,.8],["Beauty",.28,.6]];
+var MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var SE=[.85,.8,.9,.95,1,.95,.95,1,1.05,1.2,1.3,1.35];
+var D=[];
+[2024,2025].forEach(function(y){MN.forEach(function(_,m){ST.forEach(function(s,si){CT.forEach(function(c,ci){
+var rev=350000*s[2]*c[2]*SE[m]*(y==2025?1.12:1)*(0.85+rnd()*.3);
+var mg=c[1]+(rnd()-.5)*.04-(si==7&&ci==1?.05:0)-(si==3&&ci==0?.03:0);
+D.push({y:y,m:m,s:si,c:ci,r:rev,p:rev*mg})})})})});
+var $=function(i){return document.getElementById(i)};
+var regs=["All"].concat(["West","North","South","East"]);
+$("fr").innerHTML=regs.map(function(r){return"<option>"+r+"</option>"}).join("");
+$("fc").innerHTML="<option>All</option>"+CT.map(function(c){return"<option>"+c[0]+"</option>"}).join("");
+function f(v){return v>=1e7?"₹"+(v/1e7).toFixed(2)+" Cr":"₹"+(v/1e5).toFixed(1)+" L"}
+function pc(v){return(v*100).toFixed(1)+"%"}
+function sum(a){var r=0,p=0;a.forEach(function(x){r+=x.r;p+=x.p});return{r:r,p:p}}
+function render(){
+var y=+$("fy").value,rg=$("fr").value,ct=$("fc").value;
+var base=D.filter(function(d){return(rg=="All"||ST[d.s][1]==rg)&&(ct=="All"||CT[d.c][0]==ct)});
+var cur=base.filter(function(d){return d.y==y}),prv=base.filter(function(d){return d.y==y-1});
+var t=sum(cur),mg=t.p/t.r,mo=MN.map(function(_,m){return sum(cur.filter(function(d){return d.m==m}))});
+var mom=mo[11].r/mo[10].r-1,yoy=prv.length?t.r/sum(prv).r-1:null;
+function ar(v){return'<span class="'+(v>=0?"up":"dn")+'">'+(v>=0?"▲ ":"▼ ")+Math.abs(v*100).toFixed(1)+"%</span>"}
+var units=Math.round(t.r/1450);
+$("kp").innerHTML=[["Total Revenue",f(t.r),yoy==null?"Base year":ar(yoy)+" vs PY"],["Total Profit",f(t.p),"Margin "+pc(mg)],["Profit Margin %",pc(mg),"Overall"],["MoM Growth % (Dec)",ar(mom),"vs Nov"],["Units Sold",units.toLocaleString("en-IN"),"Avg ₹1,450 / unit"]].map(function(k){return'<div class="c k"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="d">'+k[2]+"</div></div>"}).join("");
+var W=560,H=230,mx=Math.max.apply(null,mo.map(function(x){return x.r}))*1.1,bw=(W-50)/12,s="",pts="";
+for(var g=0;g<=4;g++){var gy=190-g*40;s+='<line x1="40" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="var(--bd)"/><text x="36" y="'+(gy+3)+'" text-anchor="end">'+f(mx*g/4/1.1*1.1).replace("₹","")+"</text>"}
+mo.forEach(function(x,i){var h=x.r/mx*160,px=45+i*bw,py=190-Math.max(x.p,0)/mx*160;
+s+='<rect x="'+(px+3)+'" y="'+(190-h)+'" width="'+(bw-8)+'" height="'+h+'" fill="var(--pri)" rx="2"><title>'+MN[i]+": "+f(x.r)+" revenue, "+f(x.p)+" profit</title></rect><text x=\""+(px+bw/2-1)+'" y="206" text-anchor="middle">'+MN[i]+"</text>";
+pts+=(px+bw/2-1)+","+py+" "});
+s+='<polyline points="'+pts+'" fill="none" stroke="var(--sec)" stroke-width="2.5"/>';
+$("ch1").innerHTML=s;
+var cs=CT.map(function(c,i){var z=sum(cur.filter(function(d){return d.c==i}));return{n:c[0],m:z.r?z.p/z.r:0,r:z.r}}).filter(function(c){return c.r>0});
+var s2="";cs.forEach(function(c,i){var y0=12+i*(cs.length>1?36:0),w=c.m/.35*320;
+s2+='<text x="0" y="'+(y0+16)+'" style="fill:var(--tx);font-size:12px">'+c.n+'</text><rect x="110" y="'+y0+'" width="'+Math.max(w,2)+'" height="24" rx="2" fill="'+(c.m<mg-.005?"var(--bad)":"var(--ok)")+'"><title>'+c.n+" margin "+pc(c.m)+"</title></rect><text x=\""+(116+w)+'" y="'+(y0+16)+'" style="fill:var(--tx);font-size:12px">'+pc(c.m)+"</text>"});
+$("ch2").innerHTML=s2;
+var ss=ST.map(function(x,i){var z=sum(cur.filter(function(d){return d.s==i}));return{n:x[0],g:x[1],r:z.r,p:z.p,m:z.r?z.p/z.r:0}}).filter(function(x){return x.r>0}).sort(function(a,b){return b.r-a.r});
+$("tb").innerHTML="<tr><th>Store</th><th>Region</th><th>Revenue</th><th>Profit</th><th>Margin</th></tr>"+ss.map(function(x){return"<tr><td>"+x.n+"</td><td>"+x.g+"</td><td>"+f(x.r)+"</td><td>"+f(x.p)+'</td><td><span class="p" style="background:'+(x.m<mg-.005?"var(--bad)":"var(--ok)")+'">'+pc(x.m)+"</span></td></tr>"}).join("");
+var lo=cs.slice().sort(function(a,b){return a.m-b.m})[0],hi=cs.slice().sort(function(a,b){return b.m-a.m})[0];
+var sl=ss.slice().sort(function(a,b){return a.m-b.m})[0],pk=mo.reduce(function(a,x,i){return x.r>mo[a].r?i:a},0);
+$("in").innerHTML="<li><b>Underperformer:</b> "+lo.n+" has the lowest margin ("+pc(lo.m)+") vs "+pc(mg)+" overall. Review pricing and supplier costs.</li><li><b>Top margin driver:</b> "+hi.n+" at "+pc(hi.m)+". Prioritise shelf space and promotions.</li><li><b>Weakest store:</b> "+sl.n+" ("+pc(sl.m)+" margin). Check discounting and stock mix.</li><li><b>Seasonality:</b> Revenue peaks in "+MN[pk]+" ("+f(mo[pk].r)+"). Plan inventory ahead of the festive quarter.</li>"
+}
+["fy","fr","fc"].forEach(function(i){$(i).onchange=render});render();
+</script></body></html>
